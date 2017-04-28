@@ -32,7 +32,7 @@ public class FileManagement {
     void setListOfFiles(){
         File[] files = new File(directoryLocation).listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.endsWith(".xml");
+                return (name.endsWith(".ogg") || name.endsWith(".mp3"));
             }
         });;
 
