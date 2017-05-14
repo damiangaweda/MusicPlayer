@@ -1,0 +1,16 @@
+//TODO
+/**
+ 1. Dokonczyc klase PlayMain
+    - przekazywanie sterowania ze wzgledu na rozszerzenie pliku w nowym watku
+    - przygotowac flagi (atomic boolean pause itd) i ich przekazywanie do watku odtwarzajacego
+ 2. Zedytowac klase MP3 do odtwarzania za pomoca mp3spi
+ 3. Dodac za pomoca mp3spi sterowanie glosnoscia
+ 4. Dodac okno/element listy do opcji
+    - Dodac JFileChooser (zedytowac FileManagement)
+    - opcjonalnie equalizer/skorki itd
+ 5. Wyeksportowac nazwe/dlugosc utworu do InterfaceMain
+ 6. Zmodyfikowac progressbar w InterfaceMain tak aby mozna bylo zmienic jego wartosc po kliknieciu
+ 7. Posprzatac kod (glownie kolejnosc wczytywania w InterfaceMain)
+ 8. Dokumentacja najwazniejszych elementow
+
+ */

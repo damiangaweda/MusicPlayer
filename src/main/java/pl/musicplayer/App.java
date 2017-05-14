@@ -8,6 +8,8 @@ public class App
 {
     public static void main( String[] args )
     {
-        InterfaceMain interaceMain =  new InterfaceMain();
+        FileManagement fileManager = new FileManagement();
+        InterfaceMain interaceMain =  new InterfaceMain(fileManager);
+
     }
 }
