@@ -9,8 +9,8 @@
         <module name="MusicPlayer" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="MusicPlayer" target="1.5" />
+    <bytecodeTargetLevel target="1.8">
+      <module name="MusicPlayer" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

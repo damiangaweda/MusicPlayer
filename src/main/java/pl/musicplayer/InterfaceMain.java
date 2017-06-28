@@ -10,23 +10,31 @@ import java.awt.event.MouseListener;
  * Created by Damian on 029 29 kwietnia.
  */
 
+/**
+ * Main interface class
+ */
 public class InterfaceMain extends JFrame {
+
+    private Playlist playlist;
 
     FileManagement fileManagement;
 
-    protected JButton prevButton;
-    protected JButton nextButton;
-    protected JButton playPauseButton;
-    protected JButton settingsButton;
-    protected JButton muteButton;
-    protected JButton volumeUpButton;
-    protected JButton volumeDownButton;
-    protected JButton shuffleButton;
-    protected JButton repeatButton;
-    protected boolean wasPlayClicked = false;
-    protected boolean wasShuffleClicked = false;
-    protected boolean wasRepeatClicked = false;
-    protected boolean wasMuteClicked = false;
+    private JButton prevButton;
+    private JButton nextButton;
+    private JButton playPauseButton;
+    private JButton playlistButton;
+    private JButton muteButton;
+    private JButton volumeUpButton;
+    private JButton volumeDownButton;
+    private JButton shuffleButton;
+    private JButton repeatButton;
+    private JButton addButton;
+    private JButton wipeButton;
+    private boolean wasPlayClicked = false;
+    private boolean wasShuffleClicked = false;
+    private static volatile boolean wasRepeatClicked = false;
+    private boolean wasMuteClicked = false;
+    private boolean wasSettingsClicked = false;
 
     protected JProgressBar songTimeBar;
 
@@ -36,11 +44,14 @@ public class InterfaceMain extends JFrame {
 
     protected GridBagConstraints gdcMain;
     protected GridBagConstraints gdcUpperButtons;
-    protected GridBagConstraints gdcSongTimeBar;
 
     protected JPanel mainPanel;
     protected JPanel upperButtonsPanel;
-    protected JPanel songTimeBarPanel;
+
+    JProgressBarUpdate jProgressBarUpdate;
+    private static volatile boolean mustStop = false;
+    private static volatile boolean mustPause = false;
+    private static volatile boolean somethingWasPlaying = false;
 
     protected final ImageIcon playIcon = new ImageIcon("icons/03.png");
     protected final ImageIcon playHoverIcon = new ImageIcon("icons/03active.png");
@@ -54,8 +65,8 @@ public class InterfaceMain extends JFrame {
     protected final ImageIcon nextIcon = new ImageIcon("icons/02.png");
     protected final ImageIcon nextHoverIcon = new ImageIcon("icons/02active.png");
 
-    protected final ImageIcon settingsIcon = new ImageIcon("icons/12.png");
-    protected final ImageIcon settingsHoverIcon = new ImageIcon("icons/12active.png");
+    protected final ImageIcon playlistIcon = new ImageIcon("icons/12.png");
+    protected final ImageIcon playlistIconHover = new ImageIcon("icons/12active.png");
 
     protected final ImageIcon muteIcon = new ImageIcon("icons/10_3.png");
     protected final ImageIcon muteHoverIcon = new ImageIcon("icons/10_3active.png");
@@ -78,11 +89,23 @@ public class InterfaceMain extends JFrame {
     protected final ImageIcon noRepeatIcon = new ImageIcon("icons/07_2.png");
     protected final ImageIcon noRepeatHoverIcon = new ImageIcon("icons/07_2active.png");
 
-    InterfaceMain(FileManagement pfileManagement){
-        this.fileManagement = pfileManagement;
+    protected final ImageIcon addDirectoryIcon = new ImageIcon("icons/01.png");
+    protected final ImageIcon addDirectoryHoverIcon = new ImageIcon("icons/01active.png");
+
+    protected final ImageIcon wipeIcon = new ImageIcon("icons/01_1.png");
+    protected final ImageIcon wipeHoverIcon = new ImageIcon("icons/01_1active.png");
+
+    /**
+     * Create FileManagement object and invoke createWindow();
+     */
+    InterfaceMain(){
+        fileManagement = new FileManagement();
         createWindow();
     }
 
+    /**
+     * Sets most important elements and displays Frame
+     */
     private void createWindow(){
 
         this.setSize(600,250);
@@ -100,8 +123,6 @@ public class InterfaceMain extends JFrame {
         upperButtonsPanel.setLayout(new GridBagLayout());
         gdcUpperButtons = new GridBagConstraints();
 
-        //TODO It should be puted in separate method
-        //PROPABLY IN WRONG PLACING ORDER. SHOULD BE 2ND
         gdcMain.gridx = 2;
         gdcMain.gridy = 1;
         gdcMain.ipadx = 300;
@@ -109,12 +130,19 @@ public class InterfaceMain extends JFrame {
         gdcMain.fill = GridBagConstraints.CENTER;
         gdcMain.fill = GridBagConstraints.REMAINDER;
 
-        songTextField = new JTextField("PREVIEW");
+
+        if(!fileManagement.isFileEmpty())
+            songTextField = new JTextField(fileManagement.getSongName(),30);
+        else
+            songTextField = new JTextField("No songs added!");
         songTextField.setEditable(false);
         songTextField.setBorder(null);
         songTextField.setHorizontalAlignment(JTextField.CENTER);
         Font songTextFont = new Font("AppleGothic",Font.PLAIN,15);
         songTextField.setFont(songTextFont);
+        gdcMain.gridx = 1;
+        gdcMain.gridy = 1;
+        gdcMain.gridwidth = 3;
         mainPanel.add(songTextField,gdcMain);
 
         minSongTime = new JTextField("0:00");
@@ -122,11 +150,15 @@ public class InterfaceMain extends JFrame {
         minSongTime.setBorder(null);
         minSongTime.setHorizontalAlignment(JTextField.CENTER);
 
+        gdcMain.gridwidth = 1;
         gdcMain.gridx = 0;
         gdcMain.gridy = 3;
         mainPanel.add(minSongTime,gdcMain);
 
-        maxSongTime = new JTextField("4:20");
+        if(!fileManagement.isFileEmpty())
+            maxSongTime = new JTextField(fileManagement.getSongDuration());
+        else
+            maxSongTime = new JTextField("0:00");
         maxSongTime.setEditable(false);
         maxSongTime.setBorder(null);
         maxSongTime.setHorizontalAlignment(JTextField.CENTER);
@@ -141,6 +173,11 @@ public class InterfaceMain extends JFrame {
 
         this.setVisible(true);
     }
+
+    /**
+     * Sets and adds all the buttons to the main panel
+     * Sets listeners to buttons
+     */
 
     private void addButtons(){
         /**
@@ -208,19 +245,19 @@ public class InterfaceMain extends JFrame {
             }
         });
 
-        settingsButton = new JButton(settingsIcon);
-        settingsButton.setToolTipText("Settings");
-        settingsButton.setBorderPainted(false);
-        settingsButton.setContentAreaFilled(false);
-        settingsButton.setFocusPainted(false);
+        playlistButton = new JButton(playlistIcon);
+        playlistButton.setToolTipText("Playlist");
+        playlistButton.setBorderPainted(false);
+        playlistButton.setContentAreaFilled(false);
+        playlistButton.setFocusPainted(false);
 
-        settingsButton.addMouseListener(new java.awt.event.MouseAdapter() {
+        playlistButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                settingsButton.setIcon(settingsHoverIcon);
+                playlistButton.setIcon(playlistIconHover);
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                settingsButton.setIcon(settingsIcon);
+                playlistButton.setIcon(playlistIcon);
             }
         });
 
@@ -331,19 +368,59 @@ public class InterfaceMain extends JFrame {
             }
         });
 
+        addButton = new JButton(addDirectoryIcon);
+        addButton.setToolTipText("Add songs directory");
+        addButton.setBorderPainted(false);
+        addButton.setContentAreaFilled(false);
+        addButton.setFocusPainted(false);
+
+        addButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                addButton.setIcon(addDirectoryHoverIcon);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                addButton.setIcon(addDirectoryIcon);
+            }
+        });
+
+        wipeButton = new JButton(wipeIcon);
+        wipeButton.setToolTipText("Wipe playlist");
+        wipeButton.setBorderPainted(false);
+        wipeButton.setContentAreaFilled(false);
+        wipeButton.setFocusPainted(false);
+
+        wipeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                wipeButton.setIcon(wipeHoverIcon);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                wipeButton.setIcon(wipeIcon);
+            }
+        });
+
         BListener blistener = new BListener();
         prevButton.addActionListener(blistener);
         playPauseButton.addActionListener(blistener);
         nextButton.addActionListener(blistener);
-        settingsButton.addActionListener(blistener);
+        playlistButton.addActionListener(blistener);
         muteButton.addActionListener(blistener);
         volumeUpButton.addActionListener(blistener);
         volumeDownButton.addActionListener(blistener);
         shuffleButton.addActionListener(blistener);
         repeatButton.addActionListener(blistener);
+        addButton.addActionListener(blistener);
+        wipeButton.addActionListener(blistener);
 
         gdcMain.fill = GridBagConstraints.HORIZONTAL;;
         gdcMain.weightx = 100;
+
+        gdcMain.gridx = 0;
+        gdcMain.gridy = 0;
+        mainPanel.add(addButton,gdcMain);
+
+        gdcMain.gridx = 1;
+        gdcMain.gridy = 0;
+        mainPanel.add(wipeButton,gdcMain);
 
         gdcMain.gridx = 1;
         gdcMain.gridy = 2;
@@ -380,11 +457,12 @@ public class InterfaceMain extends JFrame {
         upperButtonsPanel.add(muteButton,gdcUpperButtons);
 
         gdcUpperButtons.gridx = 3;
-        upperButtonsPanel.add(settingsButton,gdcUpperButtons);
+        upperButtonsPanel.add(playlistButton,gdcUpperButtons);
 
         mainPanel.add(upperButtonsPanel,gdcMain);
 
         songTimeBar = new JProgressBar(0,10); //MIN TO SONG LENGHT
+        jProgressBarUpdate = new JProgressBarUpdate();
         gdcMain.gridx = 1;
         gdcMain.gridy = 3;
         gdcMain.ipady = 10;
@@ -393,39 +471,138 @@ public class InterfaceMain extends JFrame {
 
     }
 
-    private void setSongText(String text){
-
-    }
     /**
-     * Response to button clicked
+     * Runnable class used to update JProgressBar
+     */
+    public class JProgressBarUpdate implements Runnable{
+        Thread timer;
+
+        /**
+         * Stops thread and sets flags
+         */
+        public void stop(){
+            mustStop = true;
+            somethingWasPlaying = false;
+            try {
+                timer.join();
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+        /**
+         * Checks if thread is not running and starts new thread
+         */
+        public void start(){
+            mustStop = false;
+            if(!somethingWasPlaying) {
+                timer = new Thread(new JProgressBarUpdate());
+                timer.start();
+                somethingWasPlaying = true;
+            }
+        }
+
+        /**
+         * Sets flag to pause thread
+         */
+        public void pause(){
+            mustPause = true;
+        }
+
+        /**
+         * Sets flag to resume thread
+         */
+        public void resume(){
+            mustPause = false;
+        }
+
+        /**
+         * Runs thread and update JProgressBar every second
+         * If songs end starts next one or repeat current
+         * using autoplay method from PlayerMain class
+         */
+        @Override
+        public void run() {
+            int i = 1;
+            int max = fileManagement.timeToInt();
+            songTimeBar.setMinimum(0);
+            songTimeBar.setMaximum(max);
+            try {
+                while (i <= max) {
+                    while(mustPause) {
+                        Thread.sleep(100);
+                        if(mustStop)
+                            break;
+                    }
+                    if(mustStop)
+                        break;
+                    songTimeBar.setValue(i);
+                    i++;
+                    Thread.sleep(1000);
+                }
+                if(i >= max){
+                    somethingWasPlaying = false;
+                    if(!wasRepeatClicked) {
+                        fileManagement.moveToNextSong();
+                        maxSongTime.setText(fileManagement.getSongDuration());
+                        songTextField.setText(fileManagement.getSongName());
+                    }
+                    PlayerMain.autoplay(fileManagement,jProgressBarUpdate);
+                }
+            } catch (InterruptedException ex) {
+                songTimeBar.setValue(songTimeBar.getMaximum());
+            }
+        }
+    }
+
+    /**
+     * Button listeners
      */
     private class BListener implements ActionListener {
 
+        /**
+         *
+         * @param e event fired by one of the buttons
+         */
         public void actionPerformed(ActionEvent e){
-            if(e.getSource() == prevButton) //prev
-                System.out.println("do something 1");
+            if(e.getSource() == prevButton) { //prev
+                PlayerMain.moveToPrev(fileManagement,jProgressBarUpdate);
+                if(!fileManagement.isFileEmpty()) {
+                    maxSongTime.setText(fileManagement.getSongDuration());
+                    songTextField.setText(fileManagement.getSongName());
+                }
+            }
 
             if(e.getSource() == playPauseButton) { //playPause
                 wasPlayClicked = !wasPlayClicked;
                 if(wasPlayClicked) {
                     playPauseButton.setIcon(pauseHoverIcon);
-                    //play.song(fileManagement.getCurrentSongName());
+                    PlayerMain.pause = false;
+                    if(!fileManagement.isFileEmpty()) {
+                        maxSongTime.setText(fileManagement.getSongDuration());
+                        songTextField.setText(fileManagement.getSongName());
+                        jProgressBarUpdate.start();
+                        jProgressBarUpdate.resume();
+                        PlayerMain.startSong(fileManagement);
+                    }
+
                 }
                 else {
-                    //play.pause(true);
-                    //TODO how to continue
+                    jProgressBarUpdate.pause();
+                    PlayerMain.pause = true;
                     playPauseButton.setIcon(playHoverIcon);
                 }
             }
 
             if(e.getSource() == nextButton) {
-                fileManagement.moveToNextSong();
-                //play.stop();
-                //play.song(fileManagement.getCurrentSongName());
-                //play.song(fileManagement.getCurrentSongName());
+                PlayerMain.moveToNext(fileManagement,jProgressBarUpdate);
+                if(!fileManagement.isFileEmpty()) {
+                    maxSongTime.setText(fileManagement.getSongDuration());
+                    songTextField.setText(fileManagement.getSongName());
+                }
+
             }
 
-            if(e.getSource() == shuffleButton) { //playPause
+            if(e.getSource() == shuffleButton) { //shuffle
                 wasShuffleClicked = !wasShuffleClicked;
                 if(wasShuffleClicked) {
                     shuffleButton.setIcon(unShuffleHoverIcon);
@@ -437,7 +614,7 @@ public class InterfaceMain extends JFrame {
                 }
             }
 
-            if(e.getSource() == repeatButton) { //playPause
+            if(e.getSource() == repeatButton) { //repeat
                 wasRepeatClicked = !wasRepeatClicked;
                 if(wasRepeatClicked) {
                     repeatButton.setIcon(noRepeatHoverIcon);
@@ -447,12 +624,43 @@ public class InterfaceMain extends JFrame {
                     repeatButton.setIcon(repeatHoverIcon);
             }
 
-            if(e.getSource() == muteButton) { //playPause
+            if(e.getSource() == muteButton) { //mute
                 wasMuteClicked = !wasMuteClicked;
-                if(wasMuteClicked)
+                if(wasMuteClicked){
                     muteButton.setIcon(unmuteHoverIcon);
-                else
+                    PlayerMain.mute();
+                }
+
+                else {
                     muteButton.setIcon(muteHoverIcon);
+                    PlayerMain.unmute();
+                }
+            }
+
+            if(e.getSource() == playlistButton) { //playlist
+                wasSettingsClicked = !wasSettingsClicked;
+                if(wasSettingsClicked)
+                    playlist = new Playlist(fileManagement);
+                else
+                    playlist.closeWindow();
+
+            }
+
+            if(e.getSource() == addButton) { //add
+                fileManagement.addFiles();
+
+            }
+
+            if(e.getSource() == volumeUpButton) { //volume up
+                PlayerMain.increaseVolume();
+            }
+
+            if(e.getSource() == volumeDownButton) { //volume down
+                PlayerMain.decreaseVolume();
+            }
+
+            if(e.getSource() == wipeButton) { //wipe playlist
+                fileManagement.wipePlaylist();
             }
         }
 
