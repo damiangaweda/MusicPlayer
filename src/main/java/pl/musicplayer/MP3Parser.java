@@ -22,7 +22,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
- * Created by Damian on 025 25 czerwca.
  * Parses MP3 tags
  */
 public class MP3Parser {

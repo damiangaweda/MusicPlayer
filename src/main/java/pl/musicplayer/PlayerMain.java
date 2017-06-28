@@ -3,11 +3,7 @@ package pl.musicplayer;
 import javax.sound.sampled.Mixer;
 
 /**
- * Created by Damian on 002 2 maja.
- */
-
-/**
- * Class used to keep control of the player thread
+ * Control of the player thread
  */
 public class PlayerMain {
 

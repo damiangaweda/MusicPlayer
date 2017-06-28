@@ -12,8 +12,7 @@ import static javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED;
 
 
 /**
- * Created by Damian on 002 2 maja.
- * Read file as bytes and plays it
+ * Reads file as bytes and plays it
  */
 public class PlayerThread implements Runnable {
 

@@ -6,8 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
- * Created by Damian on 024 24 czerwca.
- * Create simple list of songs in another Frame
+ * List of chosen songs in another Frame
  */
 public class Playlist extends JFrame {
     private Iterator<String> it;

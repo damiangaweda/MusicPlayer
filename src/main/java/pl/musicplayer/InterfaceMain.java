@@ -7,11 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 
 /**
- * Created by Damian on 029 29 kwietnia.
- */
-
-/**
- * Main interface class
+ * Music player interface
  */
 public class InterfaceMain extends JFrame {
 

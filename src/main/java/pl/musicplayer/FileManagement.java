@@ -7,7 +7,7 @@ import java.util.*;
 import javax.swing.JOptionPane;
 
 /**
- * Created by Damian on 028 28 kwietnia.
+ * Choosing path to find playable music files
  */
 public class FileManagement extends JPanel {
     private File directoryLocation;
@@ -276,7 +276,7 @@ public class FileManagement extends JPanel {
     public void wipePlaylist(){
         try {
             listOfFiles = new LinkedList<>();
-            PrintWriter writer = new PrintWriter("songs/songlist.txt");
+            PrintWriter writer = new PrintWriter("songlist.txt");
             writer.print("");
             writer.close();
         }catch(IOException e){
